@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var secretKarmaReg = regexp.MustCompile(`^s/.*@([^/])+(--|\Q++\E)`)
+var secretKarmaReg = regexp.MustCompile(`^s/[[:ascii:]]*@([^/])+(--|\Q++\E)`)
 
 // Doesn't test live code but used to test regex used in descriptor.
 func Test_regex(t *testing.T) {
@@ -27,6 +27,9 @@ func Test_regex(t *testing.T) {
 		"s/@bob -------/asdf",
 		"s/@eric +++++/more",
 		"s/@✆̩̺ͧͨͯ̋̌̈̉☠̳̫͎̗̗̒̅̃͒♔̱̻̤ͭ̊̉̓ ++/test",
+		`s/asdasdas/
+
+@Eric---`,
 	}
 	var shouldNotMatch = []string{
 		"s/hello",
