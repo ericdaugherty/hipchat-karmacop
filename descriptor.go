@@ -30,7 +30,7 @@ const descriptorTemplate = `{{define "config"}}{
           },
           {
             "url": "{{.LocalBaseUrl}}/ninja",
-            "pattern": "^s\/[[:ascii:]]*@([^\/])+(--|\\Q++\\E)",
+            "pattern": "^s/.*",
             "event": "room_message",
             "name": "Ninja Hook"
           }

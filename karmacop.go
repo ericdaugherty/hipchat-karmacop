@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ericdaugherty/hipchat-go/hipchat"
 )
@@ -134,6 +135,11 @@ func (k *karmaCop) ninja(w http.ResponseWriter, r *http.Request) {
 	log.Println("Ninja Called, Payload:")
 	log.Println(payLoad)
 
+	if !checkMessage(payLoad["item"].(map[string]interface{})["message"].(map[string]interface{})["message"].(string)) {
+		returnOK(w, r)
+		return
+	}
+
 	oAuthID := payLoad["oauth_client_id"].(string)
 
 	a := newAWS()
@@ -176,4 +182,8 @@ func returnError(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func checkMessage(message string) bool {
+	return strings.Contains(message, "@") && (strings.Contains(message, "--") || strings.Contains(message, "++"))
 }
