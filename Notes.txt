@@ -1,0 +1,126 @@
+Based on:
+https://github.com/eawsy/aws-lambda-go-net
+
+Package new code:
+aws cloudformation package \
+  --template-file example.sam.yaml \
+  --output-template-file example.out.yaml \
+  --s3-bucket karmacop
+
+Deploy
+aws cloudformation deploy \
+  --template-file example.out.yaml \
+  --capabilities CAPABILITY_IAM \
+  --stack-name karma
+
+Or just update the AWS Pacakge
+aws lambda update-function-code                                           \
+  --function-name karma-Function-R4IDE2LPTA4U                                                 \
+  --zip-file fileb://handler.zip
+
+-- HipChat Install Responses
+Install Eric-Test:
+
+map[
+    oauthId:e5c10945-c08f-4b38-b021-07d33fc226e8 
+    capabilitiesUrl:https://api.hipchat.com/v2/capabilities 
+    roomId:3.662147e+06 
+    groupId:71670 
+    oauthSecret:H6aZspXfTiPcQKAQUbYuwBhHKPdQiccvPO62UwXd
+]
+
+Install Global:
+
+map[
+    capabilitiesUrl:https://api.hipchat.com/v2/capabilities 
+    groupId:71670 
+    oauthSecret:grI4n8BzcTifaKMGArsnchAAx2WJveBe7eOkGj65 
+    oauthId:1188dadf-a5c9-430c-9ab0-5d966039e889
+]
+
+Hook Call: 
+
+map[
+    event:room_message 
+    item:map[
+        message:map[
+            date:2017-03-16T17:35:12.615856+00:00 
+            from:map[
+                links:map[
+                    self:https://api.hipchat.com/v2/user/506134
+                ] 
+                mention_name:Eric 
+                name:Eric Daugherty 
+                version:WIFU6NLT 
+                id:506134
+              ] 
+              id:11fb3768-7f9b-4ff8-a344-9ae9ff95f789 
+              mentions:[] 
+              message:/test_cop 
+              type:message
+        ] 
+        room:map[
+          id:3.662147e+06 
+          is_archived:false 
+          links:map[
+            members:https://api.hipchat.com/v2/room/3662147/member 
+            participants:https://api.hipchat.com/v2/room/3662147/participant
+            self:https://api.hipchat.com/v2/room/3662147 
+            webhooks:https://api.hipchat.com/v2/room/3662147/webhook
+          ] 
+          name:EricTest 
+          privacy:private 
+          version:7VNLC68R
+        ]
+    ]
+    oauth_client_id:279743f1-c43c-464c-bdd7-c11f0db8e8bb 
+    webhook_id:1.6803596e+07
+]
+
+Ninja Hook Call
+map[
+  item:map[
+    message:map[
+      id:c6814f11-f7fb-4232-a10c-c9f82498c7e2 
+      mentions:[
+        map[
+          version:WIFU6NLT 
+          id:506134 
+          links:map[
+            self:https://api.hipchat.com/v2/user/506134
+          ] 
+          mention_name:Eric 
+          name:Eric Daugherty
+        ]
+      ] 
+      message:s/Hello/@Eric++ 
+      type:message 
+      date:2017-03-16T21:07:22.879253+00:00 
+      from:map[
+        mention_name:Eric 
+        name:Eric Daugherty 
+        version:WIFU6NLT 
+        id:506134 
+        links:map[
+          self:https://api.hipchat.com/v2/user/506134
+        ]
+      ]
+    ]
+    room:map[
+      id:3.662147e+06 
+      is_archived:false 
+      links:map[
+        participants:https://api.hipchat.com/v2/room/3662147/participant 
+        self:https://api.hipchat.com/v2/room/3662147 
+        webhooks:https://api.hipchat.com/v2/room/3662147/webhook 
+        members:https://api.hipchat.com/v2/room/3662147/member
+      ] 
+      name:EricTest 
+      privacy:private 
+      version:7VNLC68R
+    ]
+  ] 
+  oauth_client_id:ec461b8d-c9a4-414b-bd64-6d16191ef04b 
+  webhook_id:1.6805996e+07 
+  event:room_message
+]

@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
-	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/ericdaugherty/hipchat-go/hipchat"
 )
 
@@ -18,37 +19,44 @@ type karmaCop struct {
 	BaseURL string
 }
 
-func (k *karmaCop) healthcheck(w http.ResponseWriter, r *http.Request) {
+func (k *karmaCop) healthcheck(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("Processing Request to healthcheck")
-	json.NewEncoder(w).Encode([]string{"OK"})
+	b, err := json.Marshal([]string{"OK"})
+
+	if err != nil {
+		return errorResponse(err)
+	}
+	return okResponse(string(b))
 }
 
-func (k *karmaCop) atlassianConnect(w http.ResponseWriter, r *http.Request) {
+func (k *karmaCop) atlassianConnect(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("Processing Request to atlassianConect")
 	tmpl, err := template.New("config").Parse(descriptorTemplate)
 	if err != nil {
-		log.Fatalln("Error Parsing Atlassian Connect Template.", err.Error())
+		return errorResponse(err)
 	}
 
 	vals := map[string]string{
 		"LocalBaseUrl": k.BaseURL,
 	}
-	err = tmpl.Execute(w, vals)
+
+	var w bytes.Buffer
+	err = tmpl.Execute(&w, vals)
 	if err != nil {
-		log.Fatalln("Error Executing Atlassian Connect Template.", err.Error())
+		return errorResponse(err)
 	}
+	return okResponse(w.String())
 }
 
-func (k *karmaCop) installable(w http.ResponseWriter, r *http.Request) {
+func (k *karmaCop) installable(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("Processing request to installable")
 
 	var payLoad map[string]interface{}
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(strings.NewReader(request.Body))
 	err := decoder.Decode(&payLoad)
 	if err != nil {
 		log.Println("Error decoding install request body.", err.Error())
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	log.Println("Installable Called, Payload:")
@@ -66,32 +74,29 @@ func (k *karmaCop) installable(w http.ResponseWriter, r *http.Request) {
 	tok, _, err := hc.GenerateToken(credentials, []string{hipchat.ScopeSendNotification})
 	if err != nil {
 		log.Fatalln("Error generating HipChat Client Token.", err.Error())
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	a := newAWS()
 	//a.writeRoomAuthTokenToDB(roomName, tok)
 	a.writeTokenToS3(oAuthID, tok)
 	if err != nil {
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
-	returnOK(w, r)
+	return okResponse("")
 }
 
-func (k *karmaCop) test(w http.ResponseWriter, r *http.Request) {
+func (k *karmaCop) test(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("Processing Request to test.")
 
 	var err error
 	var payLoad map[string]interface{}
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(strings.NewReader(request.Body))
 	err = decoder.Decode(&payLoad)
 	if err != nil {
 		log.Println("Error decoding hook request body.", err.Error())
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	log.Println("Test Called, Payload:")
@@ -103,12 +108,11 @@ func (k *karmaCop) test(w http.ResponseWriter, r *http.Request) {
 	//tok, err := a.getRoomAuthTokenFromDB(roomName)
 	tok, err := a.getTokenFromS3(oAuthID)
 	if err != nil {
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	notifRq := &hipchat.NotificationRequest{
-		Message: "KarmaCop is Operational.",
+		Message: "KarmaCop is Operational. Now with Native Go!",
 	}
 
 	hipChat := hipchat.NewClient(tok.AccessToken)
@@ -116,28 +120,26 @@ func (k *karmaCop) test(w http.ResponseWriter, r *http.Request) {
 	roomName := strconv.Itoa(int((payLoad["item"].(map[string]interface{}))["room"].(map[string]interface{})["id"].(float64)))
 	hipChat.Room.Notification(roomName, notifRq)
 
-	returnOK(w, r)
+	return okResponse("")
 }
 
-func (k *karmaCop) ninja(w http.ResponseWriter, r *http.Request) {
+func (k *karmaCop) ninja(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("Processing Request to ninja.")
 
 	var err error
 	var payLoad map[string]interface{}
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(strings.NewReader(request.Body))
 	err = decoder.Decode(&payLoad)
 	if err != nil {
 		log.Println("Error decoding hook request body.", err.Error())
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	log.Println("Ninja Called, Payload:")
 	log.Println(payLoad)
 
 	if !checkMessage(payLoad["item"].(map[string]interface{})["message"].(map[string]interface{})["message"].(string)) {
-		returnOK(w, r)
-		return
+		return okResponse("")
 	}
 
 	oAuthID := payLoad["oauth_client_id"].(string)
@@ -146,8 +148,7 @@ func (k *karmaCop) ninja(w http.ResponseWriter, r *http.Request) {
 	//tok, err := a.getRoomAuthTokenFromDB(roomName)
 	tok, err := a.getTokenFromS3(oAuthID)
 	if err != nil {
-		returnError(w, r)
-		return
+		return errorResponse(err)
 	}
 
 	fromItem := payLoad["item"].(map[string]interface{})["message"].(map[string]interface{})["from"].(map[string]interface{})
@@ -167,23 +168,23 @@ func (k *karmaCop) ninja(w http.ResponseWriter, r *http.Request) {
 	roomName := strconv.Itoa(int((payLoad["item"].(map[string]interface{}))["room"].(map[string]interface{})["id"].(float64)))
 	hipChat.Room.Notification(roomName, notifRq)
 
-	returnOK(w, r)
-}
-
-func returnOK(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func returnError(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	w.WriteHeader(http.StatusInternalServerError)
+	return okResponse("")
 }
 
 func checkMessage(message string) bool {
 	return strings.Contains(message, "@") && (strings.Contains(message, "--") || strings.Contains(message, "++"))
+}
+
+func okResponse(body string) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		Body:       body,
+		StatusCode: 200,
+	}, nil
+}
+
+func errorResponse(err error) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		Body:       err.Error(),
+		StatusCode: 500,
+	}, nil
 }

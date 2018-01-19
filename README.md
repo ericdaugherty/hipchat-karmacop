@@ -4,7 +4,6 @@ This is a simple HipChat AddOn that checks for users who use the find and replac
 
 It is written in Go and setup to deploy to AWS Lamba.
 
-Please refer to the https://github.com/eawsy/aws-lambda-go-shim project for a summary of how the Makefile works along with how to setup a Lamba Function to work properly with the shim.
 
 This project utilizes S3 and assumes a bucket named "karmacoprooms". You can edit aws.go to change the bucket name.
 
